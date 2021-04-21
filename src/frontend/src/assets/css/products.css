@@ -1,0 +1,45 @@
+
+      #products ul {
+        list-style: none;
+        margin-right: auto;
+        margin-left: auto;
+        width: 1050px;
+      }
+      #products li {
+        float: left;
+        padding: 10px;
+        width: 500px;
+      }
+  
+      #products .panel {
+        width: 470px;
+        margin: 0;
+      }
+      #products .panel-heading {
+        font-size: 25px;
+        font-weight: normal;
+        height: 55px;
+        text-align: left;
+        background-color: #d9edf7;
+      }
+      #products .solutions {
+        width: 80px;
+        height: 70px;
+        float: right;
+      }
+      #products p {
+        color: aliceblue;
+        font-size: 20px;
+        font-weight: normal;
+      }
+  
+      #products .panel-body {
+        background-repeat: no-repeat;
+        background-size: contain;
+        border-bottom-left-radius: 3px;
+        border-bottom-right-radius: 3px;
+        height: 240px;
+        padding: 10px;
+        color: aliceblue;
+        text-align: left;
+      }

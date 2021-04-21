@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="license">
+	<select id="getLicenseList" parameterType="int" resultType="licensevo">
+		<![CDATA[
+			select lc.*, sp.policy_title, sp.standard, ol.reg_date
+			 from license lc, subscription_policy sp, order_list ol 
+			 where lc.policy_no = sp.no 
+			 and lc.user_admin_no = #{adminNo}
+			 and lc.order_no = ol.no
+			 order by lc.no ASC
+		]]>
+	</select>
+	
+	<select id="getUserList" parameterType="int" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login, ag.activation, 
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu
+			 where ag.license_no = #{licenseNo}
+			 and ag.user_no = gu.no
+			 order by gu.no ASC
+		]]>
+	</select>
+	
+	<select id="getSearch1" parameterType="map" resultType="generaluservo">
+		<![CDATA[
+			select gu.*, ag.last_login 
+			 from agent ag, general_user gu
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and last_login between to_timestamp(#{start}, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+			 order by gu.no ASC
+		]]>
+	</select>
+	
+	<select id="getSearch2" parameterType="map" resultType="generaluservo">
+		<![CDATA[
+			select gu.*, ag.last_login 
+			 from agent ag, general_user gu 
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 order by gu.no ASC
+		]]>
+	</select>
+
+	<delete id="delUser" parameterType="map">
+		<![CDATA[
+			delete 
+			 from agent
+			 where no in ${delUsrs}
+			 and license_no = #{licenseNo}
+		]]>
+	</delete>
+	
+	<update id="downCurrentCount" parameterType="int">
+		<![CDATA[
+			update license 
+			 set current_count = current_count-1
+			 where no = ${_parameter};
+		]]>
+	</update>
+	
+	<insert id="addOrderList" parameterType="map">
+		<![CDATA[
+			insert into order_list 
+			 (policy_no, user_no, month_count, start_date, end_date, org_price, dc_price, total_price, month_payment) 
+			 values (#{policyNo}, #{userNo}, #{monthCount}, 
+			 to_timestamp(#{startDate}, 'YYYY-MM-DD HH24:MI:SS'),
+			 to_timestamp(#{endDate}, 'YYYY-MM-DD HH24:MI:SS'),
+			 #{orgPrice}, #{dcPrice}, #{totalPrice}, #{monthPay});
+		]]>
+	</insert>
+	
+	<insert id="addLicense" parameterType="map">
+		<![CDATA[
+			insert into license 
+			 (order_no, user_admin_no, policy_no, license_key, current_count, max_count, start_date, end_date, activation)
+			 values( 
+			   (select no from order_list where start_date = to_timestamp(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')), 
+			   #{userAdminNo}, 
+			   #{policyNo}, 
+			   #{licenseKey}, 
+			   0, 
+			   #{maxCount}, 
+			   to_timestamp(#{startDate}, 'YYYY-MM-DD HH24:MI:SS'), 
+			   to_timestamp(#{endDate}, 'YYYY-MM-DD HH24:MI:SS'), 
+			   'A'
+			 )
+		]]>
+	</insert>
+	
+	<select id="dupUserEmail" parameterType="map" resultType="generaluservo">
+		<![CDATA[
+			select * 
+			  from general_user gu, agent ag
+			  where gu.email = #{email}
+			  and ag.license_no = #{licenseNo}
+			  and ag.user_no = gu.no
+			  order by gu.no ASC
+		]]>
+	</select>
+	
+	<insert id="addUser" parameterType="map">
+		<![CDATA[
+			insert into general_user
+			  (email, password, name, dept_name)
+			  values(#{email}, #{password}, #{name}, #{dept})
+		]]>
+	</insert>
+	<update id="updateUserInfo" parameterType="map">
+		<![CDATA[
+			update general_user
+			  set password = #{password},
+			  name = #{name},
+			  dept_name = #{dept}
+			 where email = #{email} 
+		]]>
+	</update>
+	
+	<insert id="addAgent" parameterType="map">
+		<![CDATA[
+			insert into agent
+			  (user_no, license_no, user_admin_no)
+			  values((select no from general_user where email = #{email}), #{licenseNo}, #{adminUserNo})
+		]]>
+	</insert>
+	
+	<update id="upCurrentCount" parameterType="int">
+		<![CDATA[
+			update license 
+			 set current_count = current_count+1
+			 where no = ${_parameter};
+		]]>
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="getAgentList" parameterType="int" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login, ag.activation, 
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu
+			 where ag.license_no = #{licenseNo}
+			 and ag.user_no = gu.no
+			 order by ag.no asc
+		]]>
+	</select>
+
+	<delete id="delAgent" parameterType="string">
+		<![CDATA[
+ 			delete  
+ 			 from agent 
+ 			 where no in ${_parameter} 
+ 		]]> 
+	</delete>
+	
+	<select id="dupAgentMac" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select * 
+			  from agent
+			  where license_no = #{licenseNo}
+			  and mac_address = #{macaddr}
+			  order by no asc
+		]]>
+	</select>
+	
+	<select id="dupUser" parameterType="map" resultType="generaluservo">
+		<![CDATA[
+			select * 
+			  from general_user
+			  where email = #{email}
+			  order by no asc
+		]]>
+	</select>
+	
+	<insert id="addAgentMac" parameterType="map">
+		<![CDATA[
+			insert into agent
+			  (user_no, name, mac_address, license_no, user_admin_no)
+			  values((select no from general_user where email = #{email}), #{agentname}, #{macaddr}, #{licenseNo}, #{adminUserNo})
+		]]>
+	</insert>
+	
+	<select id="dupAgentIp" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select * 
+			  from agent
+			  where license_no = #{licenseNo}
+			  and ip_address = #{ipaddr}
+			  order by no asc
+		]]>
+	</select>
+	
+	<insert id="addAgentIp" parameterType="map">
+		<![CDATA[
+			insert into agent
+			  (user_no, name, ip_address, license_no, user_admin_no)
+			  values((select no from general_user where email = #{email}), #{agentname}, #{ipaddr}, #{licenseNo}, #{adminUserNo})
+		]]>
+	</insert>
+	
+	<select id="getSearchAgentIp1" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 and ag.ip_address like CONCAT('%', #{dept}, '%')
+			 and last_login between to_timestamp(#{start}, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<select id="getSearchAgentMac1" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 and ag.mac_address like CONCAT('%', #{dept}, '%')
+			 and last_login between to_timestamp(#{start}, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<select id="getSearchAgentIp2" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu 
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 and ag.ip_address like CONCAT('%', #{ipaddr}, '%')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<select id="getSearchAgentMac2" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu 
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 and ag.mac_address like CONCAT('%', #{macaddr}, '%')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<select id="getSearchAgent1" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu 
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 and last_login between to_timestamp(#{start}, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(#{end}, 'YYYY-MM-DD HH24:MI:SS')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<select id="getSearchAgent2" parameterType="map" resultType="agentvo">
+		<![CDATA[
+			select ag.no, ag.user_no, ag.name as agent_name, ag.mac_address,
+			 ag.ip_address, ag.last_login,
+			 gu.email, gu.password, gu.name, gu.dept_name
+			 from agent ag, general_user gu 
+			 where ag.license_no = #{licenseNo} 
+			 and ag.user_no = gu.no
+			 and gu.email like CONCAT('%', #{email}, '%')
+			 and gu.name like CONCAT('%', #{name}, '%')
+			 and gu.dept_name like CONCAT('%', #{dept}, '%')
+			 and ag.name like CONCAT('%', #{agentname}, '%')
+			 order by ag.no asc
+		]]>
+	</select>
+	
+	<update id="changeActive" parameterType="map">
+		<![CDATA[
+			update agent 
+			 set activation = not activation
+			 where no in ${activeUsrs}
+			 and license_no = #{licenseNo}
+		]]>
+	</update>
+	
+	<update id="updateCnt" parameterType="int">
+		<![CDATA[
+			update license
+			 set current_count = 
+			   (select 
+			     count(*) 
+			     from agent 
+			     where license_no = #{licenseNo}
+			     and activation = true)
+			 where no = #{licenseNo}
+		]]>
+	</update>
+	
+	
+	
+	
+	<update id="updateLicense" parameterType="map">
+		<![CDATA[
+			update license
+			 set end_date = to_timestamp(#{enddate}, 'YYYY-MM-DD HH24:MI:SS')
+			 where no = ${licenseNo}
+		]]>
+	</update>
+	
+	
+	
+	<select id="getCurCnt" parameterType="int" resultType="int">
+		<![CDATA[
+			select current_count from license
+			 where no = ${_parameter}
+		]]>
+	</select>
+	
+	<select id="getMaxCnt" parameterType="int" resultType="int">
+		<![CDATA[
+			select max_count from license
+			 where no = ${_parameter}
+		]]>
+	</select>
+	
+</mapper>
